@@ -1,42 +1,60 @@
 #include<stdio.h>
-#include<stdlib.h>
-#include<sys/types.h>
-#include<sys/socket.h>
-#include<netinet/in.h>
 #include<string.h>
+#include<sys/socket.h>
+#include<arpa/inet.h>
 
-int main(){
-    int sock, len, fromlen, n;
-    struct sockaddr_in server, client;
-    char buff[1024], message[1024] = "Hello World This is the message send from server side";
+int main(void){
+    int sock_desc;
+    struct sockaddr_in server_addr, client_addr;
+    char server_message[1024], client_message[1024];
+    int client_struct_length = sizeof(client_addr);
 
-    sock = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sock<0){
-        perror("Error in creating socket");
+    // Clean the buffer
+    memset(server_message, '\0', sizeof(server_message));
+    memset(client_message, '\0', sizeof(client_message));
+
+    // Create UDP Socket
+    sock_desc = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+    if (sock_desc<0){
+        printf("\nError in creating the socket...");
+        return -1;
     }
-    len = sizeof(server);
-    bzero(&server, len);
-    server.sin_family = AF_INET;
-    server.sin_port = htons(9001);
-    server.sin_addr.s_addr = INADDR_ANY;
-    if (bind(sock, (struct sockaddr *)&server, len) < 0);{
-        perror("Error in Binding Socket with IP and PORT");
-    }   
-    fromlen = sizeof(struct sockaddr_in);
-    while (1)
+    printf("\nSocket Created Successfully");
+
+    // Set the IP and PORT number for binding
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(2000);
+    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    // Bind the socket with IP and PORT
+    if (bind(sock_desc, (struct sockaddr *)&server_addr, sizeof(server_addr))<0){
+        printf("\nError in binding the port...");
+        return -1;
+    }
+    printf("\nBinding done successfully");
+    printf("\nListening for the incoming messages...");
+
+    // Receive client's message
+    if (recvfrom(sock_desc, client_message, sizeof(client_message), 0, (struct sockaddr *)&client_addr, &client_struct_length)<0)
     {
-        n = recvfrom(sock, buff, sizeof(buff), 0, (struct sockaddr *)&client, &fromlen);
-        if (n<0){
-            perror("Error in recieving");
-        }
-        write(1, message, sizeof(message));
-        write(1, buff, n);
-        char msg[100] = "Got your message\n";
-        n = sendto(sock, msg, sizeof(msg), 0, (struct sockaddr *)&client, fromlen);
-        if (n<0)
-        {
-            perror("Error in sending message from server side");
-        }
+        printf("\nError in receiving data from client...");
+        return -1;
     }
+    printf("\nData Received from client: %s\n", client_message);
+    if (sendto(sock_desc, server_message, strlen(server_message), 0, (struct sockaddr *)&client_addr, client_struct_length)<0)
+    {
+        printf("\nError in sending data to the client...");
+        return -1;
+    }
+    // Close the socket
     return 0;
 }
+
+
+
+
+
+
+
+
