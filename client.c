@@ -30,7 +30,7 @@ int main(void){
     // send message to the server
     if (sendto(sock_desc, client_message, strlen(client_message), 0, (struct sockaddr*)&server_address, server_struct_length)<0)
     {
-        printf("\nError in send message to the server...");
+        printf("\nError in sending message to the server...");
         return -1;
     }
     // Receiver the server's response
